@@ -1,0 +1,7 @@
+{
+  "name": "request-watcher",
+  "dependencies": {
+    "@zeit/integration-utils": "latest",
+    "asciichart": "^1.5.7"
+  }
+}
