@@ -22,14 +22,18 @@ const render = ({ deployments, projectId }) => htm`
 const fetch = async ({ payload, zeitClient }) => {
   const { projectId } = payload;
 
-  const res = await zeitClient.fetch(
-    projectId
-      ? `/v4/now/deployments?projectId=${projectId}&limit=10`
-      : `/v4/now/deployments?limit=10`,
-    {}
-  );
+  try {
+    const res = await zeitClient.fetchAndThrow(
+      projectId
+        ? `/v4/now/deployments?projectId=${projectId}&limit=10`
+        : `/v4/now/deployments?limit=10`,
+      {}
+    );
 
-  const { deployments } = await res.json();
+    const { deployments } = await res.json();
+  } catch (error) {
+    throw new Error('Timeout');
+  }
 
   return { deployments, projectId };
 };

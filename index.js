@@ -1,8 +1,11 @@
 const { withUiHook, htm } = require('@zeit/integration-utils');
 const { Home, Watcher, Layout } = require('./pages');
+const { Notification } = require('./components');
 
 module.exports = withUiHook(async ({ zeitClient, payload }) => {
   const { project, projectId, action } = payload;
+
+  console.log(payload);
 
   // We emulate a basic route like /:id
   const [url, parameter] = action.split('/');
@@ -31,13 +34,20 @@ module.exports = withUiHook(async ({ zeitClient, payload }) => {
       );
     }
     default: {
-      const homeProps = await Home.fetch({ payload, zeitClient });
+      try {
+        const homeProps = await Home.fetch({ payload, zeitClient });
 
-      return Layout(
-        projectId ? `Deployments of ${project.name}` : 'Deployments',
-        Home.render(homeProps),
-        false
-      );
+        return Layout(
+          projectId ? `Deployments of ${project.name}` : 'Deployments',
+          Home.render(homeProps),
+          false
+        );
+      } catch (err) {
+        return Notification(
+          'error',
+          'Looks likes something went wrong, try reloading !'
+        );
+      }
     }
   }
 });
