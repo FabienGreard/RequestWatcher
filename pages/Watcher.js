@@ -122,7 +122,7 @@ const render = ({ deploymentEvents, clientState }) => {
     durationRepresentedValue = 'duration',
     durationCumulative = 'cumulative',
     durationExperimentalCurves = 'none',
-    memorySizeRepresentedValue = 'maxMemoryUsed',
+    memorySizeRepresentedValue = 'memorySize',
     memorySizeCumulative = 'cumulative',
     memorySizeExperimentalCurves = 'none',
   } = clientState;
@@ -251,7 +251,7 @@ const render = ({ deploymentEvents, clientState }) => {
       </Box>
     </Box>
   </Box>
-  `;
+  <AutoRefresh timeout="3000" action="${action}"/>`;
 };
 
 const fetch = async ({ zeitClient, deploymentId }) => {
