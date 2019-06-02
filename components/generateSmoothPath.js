@@ -38,4 +38,4 @@ const svgPath = (points, command) => {
   );
 };
 
-module.exports = svgPath;
+module.exports = points => svgPath(points, bezierCommand);

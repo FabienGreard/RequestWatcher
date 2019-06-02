@@ -15,10 +15,15 @@ module.exports = withUiHook(async ({ zeitClient, payload }) => {
         deploymentId: parameter,
       });
 
-      const title = htm`Overall usage of <Link href=${'https://' +
-        deployment.url}>${deployment.url}</Link>`;
+      const title = deployment.error ?
+        htm`Overall usage of ${deployment.error.id}` :
+        htm`Overall usage of <Link href=${'https://' + deployment.url}>${deployment.url}</Link>` ;
 
-      return Layout(title, Watcher.render(watcherProps), true);
+      console.log(payload.clientState);
+      return Layout(title, Watcher.render({
+        ...watcherProps,
+        clientState: payload.clientState,
+      }), true);
     }
     default: {
       const homeProps = await Home.fetch({ payload, zeitClient });
