@@ -34,20 +34,13 @@ module.exports = withUiHook(async ({ zeitClient, payload }) => {
       );
     }
     default: {
-      try {
-        const homeProps = await Home.fetch({ payload, zeitClient });
+      const homeProps = await Home.fetch({ payload, zeitClient });
 
-        return Layout(
-          projectId ? `Deployments of ${project.name}` : 'Deployments',
-          Home.render(homeProps),
-          false
-        );
-      } catch (err) {
-        return Notification(
-          'error',
-          'Looks likes something went wrong, try reloading !'
-        );
-      }
+      return Layout(
+        projectId ? `Deployments of ${project.name}` : 'Deployments',
+        Home.render(homeProps),
+        false
+      );
     }
   }
 });

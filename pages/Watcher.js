@@ -119,10 +119,10 @@ const render = ({ deploymentEvents, clientState }) => {
   const events = deploymentEvents.map(formatEvent);
 
   const {
-    durationRepresentedValue = 'duration',
+    durationRepresentedValue = 'billedDuration,duration',
     durationCumulative = 'cumulative',
     durationExperimentalCurves = 'none',
-    memorySizeRepresentedValue = 'memorySize',
+    memorySizeRepresentedValue = 'memorySize,maxMemoryUsed',
     memorySizeCumulative = 'cumulative',
     memorySizeExperimentalCurves = 'none',
   } = clientState;
