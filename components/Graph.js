@@ -2,6 +2,8 @@ const { htm } = require('@zeit/integration-utils');
 const { colors } = require('../theme.js');
 const generateSmoothPath = require('./generateSmoothPath.js');
 
+const COLORS_ORDER = [colors.green, colors.red];
+
 const formatValue = value => {
   if (value === 0) return 0;
 
@@ -10,7 +12,10 @@ const formatValue = value => {
   const multi = ['', 'K', 'M', 'B', 'T', 'P'];
   const closerExpo = Math.pow(10, expoIndex - 2);
 
-  return (Math.round(value / closerExpo) * closerExpo) / Math.pow(10, index * 3) + multi[index];
+  return (
+    (Math.round(value / closerExpo) * closerExpo) / Math.pow(10, index * 3) +
+    multi[index]
+  );
 };
 
 const formatDate = ts => {
@@ -21,6 +26,26 @@ const formatDate = ts => {
 
 const generateStepValue = (range, step, max) => {
   return ((range[1] - range[0]) * step) / max + range[0];
+};
+
+const generateLegend = ({ dataList, WIDTH, HEIGHT }) => {
+  const fontSize =
+    Math.min(Math.floor(HEIGHT / 12), Math.floor(WIDTH / 22)) * 1.2;
+  const names = dataList
+    .map(
+      ({ name }, index) => `<text
+      x="${WIDTH / 2 - (index === 0 ? 20 : -20)}"
+      y="10"
+      font-size="${fontSize}"
+      text-anchor="${index === 0 ? 'end' : 'start'}"
+      alignment-baseline="bottom"
+      fill="${COLORS_ORDER[index]}"
+    >
+      ${name}
+    </text>`
+    )
+    .join('');
+  return `<g>${names}</g>`;
 };
 
 const generateAxes = ({ WIDTH, HEIGHT, xRange, xFormat, yRange, yFormat }) => {
@@ -44,7 +69,7 @@ const generateAxes = ({ WIDTH, HEIGHT, xRange, xFormat, yRange, yFormat }) => {
       y2="${heightBase + 5}"
       stroke="#eaeaea"
       stroke-dasharray="4"
-    />`,
+    />`
     )}
     ${[0, 1, 2].map(
       val => `<text
@@ -55,7 +80,7 @@ const generateAxes = ({ WIDTH, HEIGHT, xRange, xFormat, yRange, yFormat }) => {
         alignment-baseline="middle"
       >
         ${yFormat(generateStepValue(yRange, val, 2))}
-      </text>`,
+      </text>`
     )}
     <line
       x1="${widthBase - 5}"
@@ -72,7 +97,7 @@ const generateAxes = ({ WIDTH, HEIGHT, xRange, xFormat, yRange, yFormat }) => {
       y2="${(heightBase * val) / 2}"
       stroke="#eaeaea"
       stroke-dasharray="4"
-    />`,
+    />`
     )}
     ${[0, 1, 2, 3, 4]
       .map(val => ({
@@ -82,7 +107,10 @@ const generateAxes = ({ WIDTH, HEIGHT, xRange, xFormat, yRange, yFormat }) => {
       .reduce((prev, next, currentIndex, arr) => {
         if (currentIndex === 0) return [next];
 
-        if (currentIndex === arr.length - 1 || arr[currentIndex - 1].value !== next.value)
+        if (
+          currentIndex === arr.length - 1 ||
+          arr[currentIndex - 1].value !== next.value
+        )
           prev.push(next);
 
         return prev;
@@ -95,43 +123,68 @@ const generateAxes = ({ WIDTH, HEIGHT, xRange, xFormat, yRange, yFormat }) => {
         text-anchor="middle"
       >
         ${value}
-      </text>`,
+      </text>`
       )}
   </g>`;
 };
 
-const generateGraphWithSpace = ({
+const generateSvgClosedPathFromPoints = ({
   WIDTH,
   HEIGHT,
-  data,
-  xRange,
-  xFormat,
   yRange,
-  yFormat,
+  data,
   color = colors.green,
+  curves,
 }) => {
   const widthBase = Math.round(WIDTH / 6);
   const heightBase = Math.round(HEIGHT / 1.2);
   const dataMax = yRange[1];
   const points = data.map((value, index) =>
-    [widthBase + index * 10, ((HEIGHT / 1.2) * (1 + (10 * (dataMax - value)) / dataMax)) / 11].map(
-      elt => Math.round(elt),
-    ),
+    [
+      widthBase + index * 10,
+      ((HEIGHT / 1.2) * (1 + (10 * (dataMax - value)) / dataMax)) / 11,
+    ].map(elt => Math.round(elt))
   );
   const allPoints = [];
   allPoints.push([widthBase, heightBase]);
   allPoints.push(...points);
   allPoints.push([widthBase + (data.length - 1) * 10, heightBase]);
-  const smoothPath = generateSmoothPath(allPoints);
+  const smoothPath = generateSmoothPath(allPoints, curves);
+  return `<path
+    d="${smoothPath}"
+    fill="${color}"
+  />`;
+};
+
+const generateGraphWithSpace = ({
+  WIDTH,
+  HEIGHT,
+  dataList,
+  xRange,
+  xFormat,
+  yRange,
+  yFormat,
+  color = colors.green,
+  curves,
+}) => {
   return (
     'data:image/svg+xml,' +
     encodeURIComponent(
       `<?xml version="1.0" encoding="utf-8"?>
-    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH * 1.1} ${HEIGHT}">
-    <path
-      d="${smoothPath}"
-      fill="${color}"
-    />
+    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH *
+      1.1} ${HEIGHT}">
+    ${dataList
+      .map(({ data }, index) =>
+        generateSvgClosedPathFromPoints({
+          WIDTH,
+          HEIGHT,
+          yRange,
+          data,
+          color: COLORS_ORDER[index],
+          curves,
+        })
+      )
+      .join('')}
     ${generateAxes({
       WIDTH,
       HEIGHT,
@@ -140,23 +193,36 @@ const generateGraphWithSpace = ({
       yRange,
       yFormat,
     })}
-  </svg>`,
+    ${generateLegend({ dataList, WIDTH, HEIGHT })}
+  </svg>`
     )
       .replace(/'/g, '%27')
       .replace(/"/g, '%22')
   );
 };
 
-generateGraph = ({ HEIGHT = 120, data, xRange, xFormat, yRange, yFormat, color }) =>
+generateGraph = ({
+  HEIGHT = 120,
+  data,
+  dataList,
+  xRange,
+  xFormat,
+  yRange,
+  yFormat,
+  color,
+  curves,
+}) =>
   generateGraphWithSpace({
     WIDTH: data.length * 10 * 1.2,
     HEIGHT: HEIGHT * 1.1 * 1.2,
     data,
+    dataList,
     xRange,
     xFormat,
     yRange,
     yFormat,
     color,
+    curves,
   });
 
 module.exports = {
