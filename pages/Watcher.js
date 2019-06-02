@@ -80,6 +80,10 @@ const render = ({ deploymentEvents, clientState }) => {
   const graph = Graph.generateGraph({
     HEIGHT: 100,
     dataMax: dataMax,
+    xRange: [start, end],
+    xFormat: Graph.formatDate,
+    yRange: [0, dataMax],
+    yFormat: Graph.formatValue,
     dateStart: new Date(start).toDateString(),
     dateEnd: new Date(end).toDateString(),
     data: allBatchedEvent,
