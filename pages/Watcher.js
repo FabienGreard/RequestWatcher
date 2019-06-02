@@ -127,7 +127,7 @@ const render = ({ deploymentEvents, clientState }) => {
     memorySizeExperimentalCurves = 'none',
   } = clientState;
 
-  if (deploymentEvents.length === 0)
+  if (events.length === 0)
     return Notification(
       'warn',
       "it seems like we can't fetch any logs for this deployment"
